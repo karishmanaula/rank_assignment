@@ -36,6 +36,7 @@ if (!empty($endpoint)) {
                'age'=> $age,
                'address'=> $address,
                'points' => 0,
+               'status' => 1,
             ];  
             $param = [
                 'table' => 'users',
@@ -93,7 +94,7 @@ if (!empty($endpoint)) {
             
             // fetch data for given user from API
             $db = new Database($GLOBALS['db_host'],$GLOBALS['db_name'],$GLOBALS['db_user'],$GLOBALS['db_pass'],$GLOBALS['db_opt']);
-            $qry="SELECT * from `users` WHERE `id`=?";
+            $qry="SELECT * from `users` WHERE `id`=? AND `status`=1";
             $data = $db->rawFetch([
                 'query' => $qry, // raw query
                 'arrData' => [$user_id] // data array
@@ -147,7 +148,7 @@ if (!empty($endpoint)) {
             // 
             $db = new Database($GLOBALS['db_host'],$GLOBALS['db_name'],$GLOBALS['db_user'],$GLOBALS['db_pass'],$GLOBALS['db_opt']);
 
-            $qrySession = "SELECT * FROM `users` WHERE `id` = ?";
+            $qrySession = "SELECT * FROM `users` WHERE `id` = ? AND`status`=1";
             $params = [
                 'query'     =>  $qrySession,
                 'arrData'   =>  [$user_id],
@@ -174,7 +175,7 @@ if (!empty($endpoint)) {
                 $db->update($param);
 
                 // get all users order by points
-                $qry="SELECT * FROM `users` ORDER BY `points` desc;";
+                $qry="SELECT * FROM `users` WHERE `status`=1 ORDER BY `points` desc;";
                 $params = [
                     'query'     =>  $qry,
                     'arrData'   =>  [],
@@ -228,7 +229,7 @@ if (!empty($endpoint)) {
 
             // get user from database
             $db = new Database($GLOBALS['db_host'],$GLOBALS['db_name'],$GLOBALS['db_user'],$GLOBALS['db_pass'],$GLOBALS['db_opt']);
-            $qrySession = "SELECT * FROM `users` WHERE `id` = ?";
+            $qrySession = "SELECT * FROM `users` WHERE `id` = ? AND `status`=1";
             $params = [
                         'query'     =>  $qrySession,
                         'arrData'   =>  [$user_id],
@@ -255,7 +256,7 @@ if (!empty($endpoint)) {
                 $db->update($param);
 
                 // fetch users from database in order of points
-                $qry="SELECT * FROM `users` ORDER BY `points` desc;";
+                $qry="SELECT * FROM `users` WHERE `status`=1 ORDER BY `points` desc;";
                 $params = [
                     'query'     =>  $qry,
                     'arrData'   =>  [],
@@ -285,9 +286,62 @@ if (!empty($endpoint)) {
             }
             header('Content-Type: application/json');
             echo encodeJavaScriptString($arrResponse);
-            exit();
+            exit(); 
+        break;
+        case'delete_user':
+            $user_id  = isset($_REQUEST['user_id']) ? getSanitizedData($_REQUEST['user_id']) : '';
+            $db = new Database($GLOBALS['db_host'],$GLOBALS['db_name'],$GLOBALS['db_user'],$GLOBALS['db_pass'],$GLOBALS['db_opt']);
+            $qrySession = "SELECT * FROM `users` WHERE `id` = ? AND `status`=1";
+            $params = [
+                        'query'     =>  $qrySession,
+                        'arrData'   =>  [$user_id],
+            ];
+            $res = $db->rawFetch($params);
+            if (empty($res)) {
+                $arrResponse = [
+                    'success'   =>  'success',
+                    'message'   =>  'user does not exist',
+                    'error'     =>  null,
+                    'data'      =>  null,
+                    'code'      =>  '002',
+                ];
+                header($_SERVER['SERVER_PROTOCOL'] . " 204 No Content");
+            } else {
+                // dsable the status of user database
+           
+                $param = [
+                    'table' => 'users', // name of table
+                    'data' => ['status'=>0], // array of columns to be enter
+                    'condition' => [['id', '=', $user_id]], // multi dimensional array ['key','conditional statement like = or LIKE or <>','value']
+                ];
+                $res=$db->update($param);
+                if($res){
+                    $arrResponse = [
+                        'success'   =>  'success',
+                        'message'   =>  'user deleted successfully',
+                        'error'     =>  null,
+                        'data'      =>  null,
+                        'code'      =>  '003',
+                    ];
+                    header($_SERVER['SERVER_PROTOCOL'] . " 200 OK");
+                    //exit();
+                }
+                else{
+                    $arrResponse = [
+                        'success'   =>  'success',
+                        'message'   =>  'Something went wrong',
+                        'error'     =>  null,
+                        'data'      =>  null,
+                        'code'      =>  '003',
+                    ];
+                    header($_SERVER['SERVER_PROTOCOL'] . " 200 OK");
+                }
+                header('Content-Type: application/json');
+                echo encodeJavaScriptString($arrResponse);
+                exit(); 
+            }
+            break;
 
-            break;              
         default:
             $arrResponse = [
                 'message'   =>  'no such api endpoint found',

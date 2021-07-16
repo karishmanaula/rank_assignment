@@ -23,10 +23,11 @@ CREATE TABLE IF NOT EXISTS `users` (
   `age` varchar(50) NOT NULL,
   `address` varchar(50) NOT NULL,
   `points` int(11) NOT NULL DEFAULT 0,
+  `status` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 -- Dumping data for table leaderboard.users: ~5 rows (approximately)
 DELETE FROM `users`;
